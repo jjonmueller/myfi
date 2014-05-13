@@ -1,22 +1,14 @@
 
 package com.vision.works;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 import android.app.Activity;
-
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
-import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -32,20 +24,16 @@ import android.widget.TextView;
 public class MyFi extends Activity {
 
 
-	WifiManager mainWifi;
-
-	ListView mainListView;
-	mItems[] itemss;
-	ArrayAdapter<mItems> listAdapter;
-	ArrayList<String> checked = new ArrayList<String>();
-	StringBuilder sb = new StringBuilder();
-	ArrayList<mItems> wifiList = new ArrayList<mItems>();
+	mItems[] items;
 	Context mCtx = this;
-
+	WifiManager mainWifi;
+	ListView mainListView;	
+	ArrayAdapter<mItems> listAdapter;
+	StringBuilder sb = new StringBuilder();
+	ArrayList<String> checked = new ArrayList<String>();	
+	ArrayList<mItems> wifiList = new ArrayList<mItems>();
 	WifiConfiguration wc = new WifiConfiguration();
-	private final Handler handler = new Handler();
-
-
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
@@ -73,7 +61,7 @@ public class MyFi extends Activity {
 
 
 		// Create and populate wifi list.
-		itemss = (mItems[]) getLastNonConfigurationInstance();	
+		items = (mItems[]) getLastNonConfigurationInstance();	
 
 
 		mainWifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -84,37 +72,26 @@ public class MyFi extends Activity {
 
 
 		sb = new StringBuilder();
-		List<ScanResult> wifiListScan = mainWifi.getScanResults();
-
 
 		List<WifiConfiguration> configs = mainWifi.getConfiguredNetworks();
 		for (WifiConfiguration config : configs) {
-
-			wifiList.add(new mItems(config.SSID));
-			mainWifi.removeNetwork(config.networkId);
-			///Make sure to do this otherwise we remember networks 
-			mainWifi.saveConfiguration();
-			//Log.i("MYFI", "Removed Network: SSID=[" + config.SSID + "] and ID=[" + config.networkId + "]");
-
+			wifiList.add(new mItems(config.SSID, config.networkId));
 		}
 
 		listAdapter = new SelectArralAdapter(mCtx, wifiList);
 		mainListView.setBackgroundColor(Color.GRAY);
 		mainListView.setAdapter(listAdapter);
 
-
 	}
 
 
 	@Override
-	protected void onPause()
-	{	
+	protected void onPause() {	
 		super.onPause();
 	}
 
 	@Override
-	protected void onResume()
-	{
+	protected void onResume() {
 		super.onResume();
 	}
 
@@ -125,15 +102,28 @@ public class MyFi extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		// TODO Auto-generated method stub
-		menu.add(0, 1, Menu.NONE, "Clear Networks");
+		
+		menu.add(0, 1, Menu.NONE, "Remove checked networks");
 		return super.onCreateOptionsMenu(menu);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// TODO Auto-generated method stub
-		Log.d("MYFI", " " +  item.toString());
+		
+        for (int i = 0; i < listAdapter.getCount(); i++) {
+        	mItems wifi = listAdapter.getItem(i);
+			if (wifi.isChecked()) {
+				mainWifi.removeNetwork(wifi.getNetworkId());
+				///Make sure to do this otherwise we remember networks 
+				mainWifi.saveConfiguration();
+				Log.i("MYFI", "Removed Network: SSID=[" + wifi.name + "] and ID=[" + wifi.networkId + "]");
+				wifiList.remove(i);
+			}
+        }
+        listAdapter = new SelectArralAdapter(mCtx, wifiList);
+		mainListView.setBackgroundColor(Color.GRAY);
+		mainListView.setAdapter(listAdapter);
+
 		return super.onOptionsItemSelected(item);
 	}
 
@@ -141,25 +131,15 @@ public class MyFi extends Activity {
 	private static class mItems {
 		private String name = "";
 		private boolean checked = true;
+		private int networkId = -1;
 
-		public mItems() {
-		}
-
-		public mItems(String name) {
+		public mItems(String name, int networkId) {
 			this.name = name;
+			this.networkId = networkId;
 		}
-
-		public mItems(String name, boolean checked) {
-			this.name = name;
-			this.checked = checked;
-		}
-
+		
 		public String getName() {
 			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
 		}
 
 		public boolean isChecked() {
@@ -176,6 +156,10 @@ public class MyFi extends Activity {
 
 		public void toggleChecked() {
 			checked = !checked;
+		}
+		
+		public int getNetworkId() {
+			return networkId;
 		}
 	}
 
@@ -260,9 +244,9 @@ public class MyFi extends Activity {
 			}
 
 			// Tag the CheckBox with the wifi it is displaying, so that we can
-			// access the wifi in onClick() when the CheckBox is toggled.
+			// access the Wi-Fi in onClick() when the CheckBox is toggled.
 			checkBox.setTag(wifi);
-			// Display wifi data
+			// Display Wi-Fi data
 			checkBox.setChecked(wifi.isChecked());
 			textView.setText(wifi.getName());
 			return convertView;
@@ -270,6 +254,6 @@ public class MyFi extends Activity {
 	}
 
 	public Object onRetainNonConfigurationInstance() {
-		return itemss;
+		return items;
 	}
 }
