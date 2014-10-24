@@ -1,0 +1,6 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/myfi_discard"
+          android:icon="@drawable/ic_action_discard"
+          android:title="@string/discard"
+          android:showAsAction="always|withText" />
+</menu>
